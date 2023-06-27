@@ -33,35 +33,36 @@ let foobar = 838383
 		statment, err := p.ParseStatment()
 		if tests[i].isError {
 			if err != nil {
-				t.Errorf("Line %d should parse failed, but it's not", i)
+				t.Errorf("Sample %d should parse failed, but it's not", i)
 			}
 		} else {
-			testLetStatement(t, statment, tests[i].expectName, tests[i].expectedValue)
+			testLetStatement(t, statment, tests[i].expectName, tests[i].expectedValue, i)
 		}
 	}
-
 }
 
-func testLetStatement(t *testing.T, s ast.Statement, name string, value string) bool {
+func testLetStatement(t *testing.T, s ast.Statement, name string, value string, idx int) bool {
 	if s.TokenLiteral() != "let" {
-		t.Errorf("s.TokenLiteral not 'let'. got=%q", s.TokenLiteral())
+		t.Errorf("At index %d, s.TokenLiteral not 'let'. got=%q", idx, s.TokenLiteral())
 		return false
 	}
 
 	letStmt, ok := s.(*ast.LetStatement)
 	if !ok {
-		t.Errorf("s not *ast.LetStatement. got=%T", s)
+		t.Errorf("At index %d, s not *ast.LetStatement. got=%T", idx, s)
 		return false
 	}
+	//fmt.Println(letStmt.Id.Token)
+	//fmt.Println(letStmt.Value)
 
 	if letStmt.Id.Value != value {
-		t.Errorf("letStmt.Name.Value should be '%s',not %s", value, letStmt.Id.Value)
+		t.Errorf("At index %d, letStmt.Name.Value should be '%s',not %s", idx, value, letStmt.Id.Value)
 		return false
 	}
 
 	if letStmt.Id.TokenLiteral() != name {
-		t.Errorf("letStmt.Name.TokenLiteral() should be '%s',not %s",
-			name, letStmt.Id.TokenLiteral())
+		t.Errorf("At index %d, letStmt.Name.TokenLiteral() should be '%s',not %s",
+			idx, name, letStmt.Id.TokenLiteral())
 		return false
 	}
 

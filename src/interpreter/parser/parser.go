@@ -11,6 +11,7 @@ import (
 type Parser struct {
 	l           *lexer.Lexer
 	curStatment ast.Statement
+	curError    error
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -60,12 +61,10 @@ func (p *Parser) parseStatment() error {
 
 // ParseStatment方法比起parseStatment多了对空行的处理
 func (p *Parser) ParseStatment() (ast.Statement, error) {
-	temp := p.curStatment
-	err := p.parseStatment()
-	if err != nil {
-		return nil, err
-	}
-	return temp, nil
+	temp, err := p.curStatment, p.curError
+
+	p.curError = p.parseStatment()
+	return temp, err
 }
 
 /* ----------------
