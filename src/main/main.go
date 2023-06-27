@@ -1,18 +1,17 @@
 package main
 
-import (
-	"MonkeyPL/src/interpreter/lexer"
-	"MonkeyPL/src/interpreter/token"
-)
+import "strconv"
+
+type A struct {
+	name string
+	age  int
+}
+
+func (a A) String() string {
+	return "Name: " + a.name + ", Age: " + strconv.Itoa(a.age)
+}
 
 func main() {
-	l := lexer.New("?abc,{}!==")
-	for l.HasNext() {
-		nxt := l.Next()
-		if nxt == nil {
-			println("Not Match")
-		} else {
-			println(token.Names[nxt.Type])
-		}
-	}
+	obj := A{name: "Alice", age: 25}
+	print(obj)
 }
