@@ -3,7 +3,6 @@ package ast
 
 import (
 	"MonkeyPL/src/interpreter/token"
-	"fmt"
 )
 
 type Ast interface {
@@ -35,18 +34,10 @@ type LetStatement struct {
 func (ls *LetStatement) statementNode()       {}
 func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal } // 值
 
-type IllegalStatment struct {
-	Reason string // 非法原因
-}
+type IllegalStatment struct{}
 
 func (is IllegalStatment) statementNode()       {}
 func (is IllegalStatment) TokenLiteral() string { return "" } // 值
-func NewIllegalStatment(reason string) IllegalStatment {
-	return IllegalStatment{Reason: reason}
-}
-func (is IllegalStatment) String() string {
-	return fmt.Sprintf("Parse failed, %s ", is.Reason)
-}
 
 // ------- 定义expression
 type Id struct {

@@ -3,13 +3,14 @@ package parser
 import (
 	"MonkeyPL/src/interpreter/ast"
 	"MonkeyPL/src/interpreter/lexer"
+	"fmt"
 	"testing"
 )
 
 func TestLetStatements(t *testing.T) {
 	input := `
 let z = 21
-lol ssss
+$ ssss
 let x = 5;
 let y = 10
 let foobar = 838383
@@ -29,10 +30,12 @@ let foobar = 838383
 		{"y", "10", false},
 		{"foobar", "838383", false},
 	}
-	for i := 0; !p.Empty(); i++ {
+
+	for i := 0; i < len(tests); i++ {
 		statment, err := p.ParseStatment()
 		if tests[i].isError {
-			if err != nil {
+			fmt.Println(err)
+			if err == nil {
 				t.Errorf("Sample %d should parse failed, but it's not", i)
 			}
 		} else {
@@ -52,8 +55,6 @@ func testLetStatement(t *testing.T, s ast.Statement, name string, value string, 
 		t.Errorf("At index %d, s not *ast.LetStatement. got=%T", idx, s)
 		return false
 	}
-	//fmt.Println(letStmt.Id.Token)
-	//fmt.Println(letStmt.Value)
 
 	if letStmt.Id.Value != value {
 		t.Errorf("At index %d, letStmt.Name.Value should be '%s',not %s", idx, value, letStmt.Id.Value)
@@ -65,6 +66,6 @@ func testLetStatement(t *testing.T, s ast.Statement, name string, value string, 
 			idx, name, letStmt.Id.TokenLiteral())
 		return false
 	}
-
+	fmt.Printf("Sample %d passed.\n", idx)
 	return true
 }

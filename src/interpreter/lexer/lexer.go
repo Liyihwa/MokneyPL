@@ -45,7 +45,6 @@ func (l *Lexer) expectPeek(tokenType token.TokenType) bool {
 }
 
 func (l *Lexer) Peek() token.Token {
-
 	return l.curToken
 }
 
@@ -71,8 +70,8 @@ func (l *Lexer) pop() {
 	res := regs.FindStringSubmatchIndex(l.input[l.pos:])
 
 	if res[0] != 0 {
-		l.pos++
 		l.curToken = newToken(token.ILLEGAL, string(l.input[l.pos]))
+		l.pos++
 		return
 	}
 
