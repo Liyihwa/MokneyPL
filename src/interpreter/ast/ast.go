@@ -39,6 +39,14 @@ type IllegalStatment struct{}
 func (is IllegalStatment) statementNode()       {}
 func (is IllegalStatment) TokenLiteral() string { return "" } // 值
 
+type ReturnStatment struct {
+	Token token.Token
+	Value Expression
+}
+
+func (rs ReturnStatment) statementNode()       {}
+func (rs ReturnStatment) TokenLiteral() string { return rs.Token.Literal } // 值
+
 // ------- 定义expression
 type Id struct {
 	Token token.Token // token.ID词法单元,Token.literal应该是变量名
@@ -59,4 +67,11 @@ type LiteralExpression struct {
 func (*LiteralExpression) expressionNode() {}
 func (l *LiteralExpression) TokenLiteral() string {
 	return l.Literal
+}
+
+type IllegalExpression struct{}
+
+func (*IllegalExpression) expressionNode() {}
+func (i *IllegalExpression) TokenLiteral() string {
+	return ""
 }

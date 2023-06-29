@@ -2,18 +2,18 @@
 >
 >   配套代码 https://interpreterbook.com/waiig_code_1.7.zip
 
-### Monkey语言的特性
+# MonkeyPL
 
 ```js
-let age = 1;
-let name = "Monkey";
-let result = 10 * (20 / 2);
+let age = 1
+let name = "Monkey"
+let result = 10 * (20 / 2)
 
-let thorsten = {"name": "Thorsten", "age": 28};
+let thorsten = {"name": "Thorsten", "age": 28}
 myArray[0]       // => 1
 thorsten["name"] // => "Thorsten"
 
-let add = fn(a, b) { return a + b; };
+let add = fn(a, b) { return a + b }
 
 let fibonacci = fn(x) {
   if (x == 0) {
@@ -22,21 +22,21 @@ let fibonacci = fn(x) {
     if (x == 1) {
       1
     } else {
-      fibonacci(x - 1) + fibonacci(x - 2);
+      fibonacci(x - 1) + fibonacci(x - 2)
     }
   }
-};
+}
 
 //高阶函数
 let twice = fn(f, x) {
-  return f(f(x));
-};
+  return f(f(x))
+}
 
 let addTwo = fn(x) {
-  return x + 2;
-};
+  return x + 2
+}
 // 我们将addTwo作为变量传入了twice函数中
-twice(addTwo, 2); // => 6
+twice(addTwo, 2) // => 6
 
 ```
 
@@ -48,11 +48,7 @@ twice(addTwo, 2); // => 6
 >
 >   将源代码分隔为词法单元的过程被称为**词法分析**。词法分析器也叫词法单元生成器(tokenizer)或者扫描器(scanner)
 
-如会被token生成器解析为：
-
-```js
-let x = 5 + 5;
-```
+如`let x = 5 + 5;`会被token生成器解析为：
 
 ```sql
 [
@@ -66,7 +62,9 @@ let x = 5 + 5;
 ]
 ```
 
-### token
+## token
+
+一个token就是编程语言中不能再分隔的最小词法单元,例如下边的代码中,包含token:**let，five，=，5，ten，10，fn，(, x, y, ),{**等等
 
 ```js
 let five = 5;
@@ -79,74 +77,188 @@ let add = fn(x, y) {
 let result = add(five, ten);
 ```
 
-如上的代码中，有哪些token？
 
->   答：let，five，=，5，ten，10，fn，(, x, y, ),{等等都算token
 
-### token分隔
+一个token应该包含类型以及字面量,因此token的定义如下:
+
+```go
+package token
+
+type TokenType int
+
+type Token struct {
+	Type    TokenType //类型
+	Literal string    //字面量
+}
+```
+
+此外token也有很多种:
+
+```go
+const (
+	ILLEGAL = iota
+	EOF
+	// id
+	ID // add, foobar, x, y, ...
+	// 整数
+	INT // 1343456
+	// 运算符
+	ASSIGN    //=
+	PLUS      //+
+	MINUS     // -
+	BANG      // !
+	ASTERISK  // *
+	SLASH     // /
+	BACKSLASH // \
+	LE
+	GE
+	LT
+	GT
+	EQ
+	NE
+	// 分隔符
+	COMMA     // ,
+	SEMICOLON // ;
+	LPAREN    //(
+	RPAREN    //)
+	LBRACE    //{
+	RBRACE    //}
+	SPACE
+	EOL
+	// 关键字
+	FUNCTION // fn
+	LET      // let
+	TRUE
+	FALSE
+	IF
+	ELSE
+	RETURN
+)
+```
+
+此外,因为我们选用整数作为TokenType,因此我们还需要一个map从而得到Token名:
+
+```go
+
+var Names = map[TokenType]string{
+	ILLEGAL:   "ILLEGAL",
+	EOF:       "EOF",
+	ID:        "ID",
+	LE:        "LE",
+	GE:        "GE",
+	LT:        "EOF",
+	GT:        "EOF",
+	EQ:        "EQ",
+	NE:        "NE",
+	INT:       "INT",
+	ASSIGN:    "ASSIGN",
+	PLUS:      "PLUS",
+	MINUS:     "MINUS",
+	BANG:      "BANG",
+	ASTERISK:  "ASTERISK",
+	SLASH:     "SLASH",
+	BACKSLASH: "BACKSLASH",
+	COMMA:     "COMMA",
+	SEMICOLON: "SEMICOLON",
+	LPAREN:    "LPAREN",
+	RPAREN:    "RPAREN",
+	LBRACE:    "LBRACE",
+	RBRACE:    "RBRACE",
+	SPACE:     "SPACE",
+	EOL:       "EOL",
+	FUNCTION:  "FUNCTION",
+	LET:       "LET",
+	TRUE:      "TRUE",
+	FALSE:     "FALSE",
+	IF:        "IF",
+	ELSE:      "ELSE",
+	RETURN:    "RETURN",
+}
+```
+
+### 正则表达式
 
 为了灵活和扩展性,我们选择用正则表达式来进行词法分析.
 
-1.   首先我们要定义词法规则:
+首先我们要明确有哪些token,以及定义token的词法规则,在Regs中我们定义了可能出现在代码中的token正则表达式
 
-     ```go
-     var Regs = []struct {
-     	Type  TokenType
-     	Regex string
-     }{
-     	{INT, `[\+-]?(?:[1-9][0-9]*|0)`},
-     	{SPACE, `(?:\x20|\t)+`},
-     	{LE, `<=`},
-     	{GE, `>=`},
-     	{EQ, "=="},
-     	{NE, "!="},
-     	{LT, `<`},
-     	{GT, `>`},
-     	{ASSIGN, `=`},
-     	{PLUS, `\+`},
-     	{MINUS, `-`},
-     	{BANG, `!`},
-     	{ASTERISK, `\*`},
-     	{SLASH, `\\`},
-     	{BACKSLASH, `/`},
-     	{COMMA, `,`},
-     	{SEMICOLON, `;`},
-     	{LPAREN, `\(`},
-     	{RPAREN, `\)`},
-     	{LBRACE, `\{`},
-     	{RBRACE, `\}`},
-     	{EOL, "\n"},
-     	{FUNCTION, `fn`},
-     	{LET, `let`},
-     	{TRUE, `true`},
-     	{FALSE, `false`},
-     	{IF, `if`},
-     	{ELSE, `else`},
-     	{RETURN, `return`},
-     	{ID, `[_a-zA-Z][_a-zA-Z0-9]*`},
-     }
-     ```
+```go
+var Regs = []struct {
+	Type  TokenType
+	Regex string
+}{
+	{INT, `[\+-]?(?:[1-9][0-9]*|0)`},
+	{SPACE, `(?:\x20|\t)+`},
+	{LE, `<=`},
+	{GE, `>=`},
+	{EQ, "=="},
+	{NE, "!="},
+	{LT, `<`},
+	{GT, `>`},
+	{ASSIGN, `=`},
+	{PLUS, `\+`},
+	{MINUS, `-`},
+	{BANG, `!`},
+	{ASTERISK, `\*`},
+	{SLASH, `\\`},
+	{BACKSLASH, `/`},
+	{COMMA, `,`},
+	{SEMICOLON, `;`},
+	{LPAREN, `\(`},
+	{RPAREN, `\)`},
+	{LBRACE, `\{`},
+	{RBRACE, `\}`},
+	{EOL, "\n"},
+	{FUNCTION, `fn`},
+	{LET, `let`},
+	{TRUE, `true`},
+	{FALSE, `false`},
+	{IF, `if`},
+	{ELSE, `else`},
+	{RETURN, `return`},
+	{ID, `[_a-zA-Z][_a-zA-Z0-9]*`},
+}
+```
 
-2.   其次,我们定义token变量和Lexer(词法分析器)变量:
+为了将正则表达式编译,我们采用了包级别的`init()`函数:
+在该函数中,我们遍历了Regs,对于每一个正则表达式,我们将其封装在了带有组名的"壳子"中:
 
-     ```go
-     
-     type Token struct {
-        Type    TokenType //类型
-        Literal string    //字面量
-        Reg     string    //正则表达式
-     }
-     
-     
-     type Lexer struct {
-        input string
-        line  int // 当前行数
-        pos   int
-        regs  *regexp.Regexp
-     }
-     ```
+```go
+var regs *regexp.Regexp
+var groupNames []string
 
-3.   利用正则表达式进行词法匹配:
+func init() {
+	var tempRegs []byte
+
+	for _, v := range token.Regs {
+		tempRegs = append(tempRegs, []byte("(?P<"+strconv.Itoa(int(v.Type))+">"+v.Regex+")|")...)
+	}
+	tempRegs = tempRegs[:len(tempRegs)-1]
+	regs = regexp.MustCompile(string(tempRegs))
+	groupNames = regs.SubexpNames()
+}
+```
+
+其次,我们定义token变量和Lexer(词法分析器)变量:
+
+```go
+
+type Token struct {
+   Type    TokenType //类型
+   Literal string    //字面量
+   Reg     string    //正则表达式
+}
+
+
+type Lexer struct {
+   input string
+   line  int // 当前行数
+   pos   int
+   regs  *regexp.Regexp
+}
+```
+
+利用正则表达式进行词法匹配:
 
 ```go
 func New(input string) *Lexer {
@@ -292,3 +404,12 @@ func (i *Id) TokenLiteral() string { return i.Token.Literal }
 
 ### 语法分析器
 
+
+
+### 解析let
+
+### 解析return
+
+### 解析表达式
+
+自上而下的运算符优先级分析（也称普拉特解析法）

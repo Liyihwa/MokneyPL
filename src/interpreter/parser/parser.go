@@ -58,9 +58,11 @@ func (p *Parser) parseStatment() (ast.Statement, error) {
 		return p.parseLet()
 	case token.EOF:
 		return nil, nil
+	case token.RETURN:
+		return p.parseReturn()
 	case token.ILLEGAL:
 		// 出现错误时需要读取一整行
-		return p.handleError(fmt.Errorf("Unknow token " + p.l.Peek().Literal))
+		return p.handleErrorStatment(fmt.Errorf("Unknow token " + p.l.Peek().Literal))
 	}
 
 	return nil, nil
@@ -77,12 +79,19 @@ func (p *Parser) ParseStatment() (ast.Statement, error) {
 }
 
 // 出现错误时调用该函数
-func (p *Parser) handleError(err error) (ast.Statement, error) {
+func (p *Parser) handleErrorStatment(err error) (ast.Statement, error) {
 	for !p.expectPeek(token.EOL) {
 		p.l.Pop()
 	}
 	p.l.Pop()
 	return ast.IllegalStatment{}, err
+}
+func (p *Parser) handleErrorExpression(err error) (ast.Expression, error) {
+	for !p.expectPeek(token.EOL) {
+		p.l.Pop()
+	}
+	p.l.Pop()
+	return &ast.IllegalExpression{}, err
 }
 
 /*
@@ -97,16 +106,16 @@ func (p *Parser) parseLet() (ast.Statement, error) {
 	if tok, flag := p.expectPopPeek(token.ID); flag { //解析id
 		idToken = tok
 	} else {
-		return p.handleError(fmt.Errorf("The `let` should be followed by a id, not `%s` ", tok.Literal))
+		return p.handleErrorStatment(fmt.Errorf("The `let` should be followed by a id, not `%s` ", tok.Literal))
 	}
 
 	if tok, flag := p.expectPopPeek(token.ASSIGN); !flag { //判断是否是=
-		return p.handleError(fmt.Errorf("The `let %s` should be followed by `=`, not `%s` ", idToken.Literal, tok.Literal))
+		return p.handleErrorStatment(fmt.Errorf("The `let %s` should be followed by `=`, not `%s` ", idToken.Literal, tok.Literal))
 	}
 
 	expression, err := p.parseExpression()
 	if err != nil {
-		return p.handleError(err)
+		return p.handleErrorStatment(err)
 	}
 
 	temp := ast.NewId(idToken.Literal, expression.TokenLiteral())
@@ -114,15 +123,34 @@ func (p *Parser) parseLet() (ast.Statement, error) {
 	res.Value = expression
 
 	if tok, flag := p.expectPopPeek(token.EOL); !flag { //判断是否是行尾
-		return p.handleError(fmt.Errorf("The `let %s = %s ` should be followed by EOL, not `%s` ", res.Id.TokenLiteral(), res.Value.TokenLiteral(), tok.Literal))
+		return p.handleErrorStatment(fmt.Errorf("The `let %s = %s ` should be followed by EOL, not `%s` ", res.Id.TokenLiteral(), res.Value.TokenLiteral(), tok.Literal))
+	}
+
+	return &res, nil
+}
+
+func (p *Parser) parseReturn() (ast.Statement, error) {
+	res := ast.ReturnStatment{Token: p.l.Peek()}
+
+	p.l.Pop()
+
+	if expression, err := p.parseExpression(); err != nil {
+		return nil, err
+	} else {
+		res.Value = expression
+	}
+
+	if tok, flag := p.expectPopPeek(token.EOL); !flag { //判断是否是行尾
+		return p.handleErrorStatment(fmt.Errorf("The `return %s` should be followed by EOL(\\n), not `%s` ", res.Value.TokenLiteral(), tok.Literal))
 	}
 
 	return &res, nil
 }
 
 func (p *Parser) parseExpression() (ast.Expression, error) {
-	if tok, flag := p.expectPopPeek(token.INT); flag { //解析字面量
-		return &ast.LiteralExpression{Literal: tok.Literal}, nil
+	if !(p.expectPeek(token.INT) || p.expectPeek(token.ID)) {
+		return p.handleErrorExpression(fmt.Errorf("Failed when parseing expression `%s` ", p.l.Peek().Literal))
 	}
-	return nil, nil
+
+	return &ast.LiteralExpression{Literal: p.l.Pop().Literal}, nil
 }
