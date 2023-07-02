@@ -410,6 +410,39 @@ func (i *Id) TokenLiteral() string { return i.Token.Literal }
 
 ### 解析return
 
-### 解析表达式
 
-自上而下的运算符优先级分析（也称普拉特解析法）
+
+# 解析表达式
+
+>   准确来说,`解析表达式`属于语法分析,但是其篇幅太大了,我们将其单独抽出来作为一章
+
+MonkeyPL中,我采用自上而下的运算符优先级分析（也称普拉特解析法）
+
+### 定义操作符优先级
+
+```go
+package parser
+
+const (
+	_ = iota
+	LOWEST
+	EQUALS      // ==
+	LESSGREATER // > or <
+	SUM         // +
+	PRODUCT     // *
+	PREFIX      // -X or !X
+	CALL        // myFunction(X)
+)
+
+```
+
+### 前缀运算符解析
+
+
+
+### 中缀运算符解析
+
+
+
+
+

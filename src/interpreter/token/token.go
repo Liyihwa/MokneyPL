@@ -88,7 +88,7 @@ var Regs = []struct {
 	Type  TokenType
 	Regex string
 }{
-	{INT, `[\+-]?(?:[1-9][0-9]*|0)`},
+	{INT, `(?:[1-9][0-9]*|0)`},
 	{SPACE, `(?:\x20|\t)+`},
 	{LE, `<=`},
 	{GE, `>=`},
@@ -121,5 +121,5 @@ var Regs = []struct {
 }
 
 func (t *Token) String() string {
-	return fmt.Sprintf("Token{Type: %s;Literal: %s}", Names[t.Type], t.Literal)
+	return fmt.Sprintf("Token{Type: %s;literal: %s}", Names[t.Type], t.Literal)
 }

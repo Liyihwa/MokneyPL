@@ -1,12 +1,10 @@
 // ast/ast.go
 package ast
 
-import (
-	"MonkeyPL/src/interpreter/token"
-)
+import "MonkeyPL/src/interpreter/config"
 
 type Ast interface {
-	TokenLiteral() string
+	Literal() string
 }
 
 // 表达式
@@ -19,59 +17,5 @@ type Statement interface {
 type Expression interface {
 	Ast
 	expressionNode()
-}
-
-/*--------------------------------------------------
-* 各种子节点
- */
-
-type LetStatement struct {
-	Token token.Token // token.LET词法单元
-	Id    *Id
-	Value Expression
-}
-
-func (ls *LetStatement) statementNode()       {}
-func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal } // 值
-
-type IllegalStatment struct{}
-
-func (is IllegalStatment) statementNode()       {}
-func (is IllegalStatment) TokenLiteral() string { return "" } // 值
-
-type ReturnStatment struct {
-	Token token.Token
-	Value Expression
-}
-
-func (rs ReturnStatment) statementNode()       {}
-func (rs ReturnStatment) TokenLiteral() string { return rs.Token.Literal } // 值
-
-// ------- 定义expression
-type Id struct {
-	Token token.Token // token.ID词法单元,Token.literal应该是变量名
-	Value string      // 变量值
-}
-
-func (i *Id) expressionNode()      {}
-func (i *Id) TokenLiteral() string { return i.Token.Literal }
-
-func NewId(name string, value string) Id {
-	return Id{Token: token.Token{Type: token.ID, Literal: name}, Value: value}
-}
-
-type LiteralExpression struct {
-	Literal string
-}
-
-func (*LiteralExpression) expressionNode() {}
-func (l *LiteralExpression) TokenLiteral() string {
-	return l.Literal
-}
-
-type IllegalExpression struct{}
-
-func (*IllegalExpression) expressionNode() {}
-func (i *IllegalExpression) TokenLiteral() string {
-	return ""
+	Value() config.ValueType
 }
