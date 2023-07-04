@@ -3,6 +3,7 @@ package ast
 import (
 	"MonkeyPL/src/interpreter/config"
 	"MonkeyPL/src/interpreter/token"
+	"fmt"
 	"strconv"
 )
 
@@ -63,8 +64,28 @@ func (i *IllegalExpression) Literal() string {
 	return ""
 }
 
-/*
- */
+// ---------------------------------
+type PrefixExpression struct {
+	token token.Token
+	right Expression
+}
+
+func NewPrefixExpression(token token.Token, right Expression) *PrefixExpression {
+	return &PrefixExpression{token: token, right: right}
+}
+
+func (p *PrefixExpression) Value() config.ValueType {
+	return p.right.Value()
+}
+
+func (*PrefixExpression) expressionNode() {}
+func (p *PrefixExpression) Literal() string {
+	return p.token.Literal + p.right.Literal()
+}
+func (p *PrefixExpression) String() string {
+	return "(" + p.token.Literal + p.right.Literal() + ")"
+}
+
 type BangPrefixExpression struct {
 	*PrefixExpression
 }
@@ -86,24 +107,50 @@ func (m *MinusPrefixExpression) Value() config.ValueType {
 	return -m.PrefixExpression.Value()
 }
 
-/*
+//------------------
+// ast/ast.go
 
- */
-
-type PrefixExpression struct {
-	token token.Token
-	right Expression
+type InfixExpression struct {
+	operatorToken token.Token // 运算符词法单元，如+
+	left          Expression
+	right         Expression
 }
 
-func NewPrefixExpression(token token.Token, right Expression) *PrefixExpression {
-	return &PrefixExpression{token: token, right: right}
+func (ie *InfixExpression) expressionNode() {}
+func (ie *InfixExpression) Literal() string {
+	return ie.left.Literal() + " " + ie.operatorToken.Literal + " " + ie.right.Literal()
+}
+func (ie *InfixExpression) String() string {
+	var leftString, rightString string
+	if infix, ok := ie.left.(fmt.Stringer); ok {
+		leftString = infix.String()
+	} else {
+		leftString = ie.left.Literal()
+	}
+	if infix, ok := ie.right.(fmt.Stringer); ok {
+		rightString = infix.String()
+	} else {
+		rightString = ie.right.Literal()
+	}
+	return "(" + leftString + " " + ie.operatorToken.Literal + " " + rightString + ")"
+}
+func (ie *InfixExpression) Value() config.ValueType {
+	return 0
+}
+func (ie *InfixExpression) Left() Expression {
+	return ie.left
+}
+func (ie *InfixExpression) Right() Expression {
+	return ie.right
+}
+func (ie *InfixExpression) Operator() token.Token {
+	return ie.operatorToken
 }
 
-func (p *PrefixExpression) Value() config.ValueType {
-	return p.right.Value()
-}
-
-func (*PrefixExpression) expressionNode() {}
-func (p *PrefixExpression) Literal() string {
-	return p.token.Literal + p.right.Literal()
+func NewInfixExpression(left Expression, operatorToken token.Token, right Expression) *InfixExpression {
+	return &InfixExpression{
+		operatorToken: operatorToken,
+		left:          left,
+		right:         right,
+	}
 }

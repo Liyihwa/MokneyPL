@@ -12,6 +12,7 @@ let ten = 10
 let add = fn(x, y) {
   x + y
 }
+> <
 let result = add(five, ten)
 `
 
@@ -47,6 +48,9 @@ let result = add(five, ten)
 		{token.EOL, "\n"},
 		{token.RBRACE, "}"},
 		{token.EOL, "\n"},
+		{token.GT, ">"},
+		{token.LT, "<"},
+		{token.EOL, "\n"},
 		{token.LET, "let"},
 		{token.ID, "result"},
 		{token.ASSIGN, "="},
@@ -61,12 +65,10 @@ let result = add(five, ten)
 	}
 
 	l := New(input)
-	i := 0
-	for !l.Empty() {
+	for i := 0; i < len(tests); i++ {
 		tt := tests[i]
-		tok := l.Peek()
-		l.Pop()
-		i++
+		tok := l.Pop()
+
 		if tok.Type != tt.expectedType || tok.Literal != tt.expectedLiteral {
 			t.Fatalf("tests[%d] -wrong,expected type=%q, got type=%s,expected literal=%s,got literal=%s",
 				i, token.Names[tt.expectedType], token.Names[tok.Type], tt.expectedLiteral, tok.Literal)

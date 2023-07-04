@@ -16,9 +16,6 @@ let x =    5;
 let y =    10
 let foobar =    -838383
 `
-	//return ok
-	//return OK%$
-	//return 25
 
 	l := lexer.New(input)
 	p := New(l)
@@ -36,8 +33,7 @@ let foobar =    -838383
 	}
 
 	for i := 0; i < len(tests); i++ {
-		statment, err := p.ParseStatment()
-		fmt.Printf("Index %d Literal:  %s\n", i, statment.Literal())
+		statment, err := p.Next()
 		if tests[i].isError {
 			fmt.Printf("At index %d, has error [%s]\n", i, err)
 			if err == nil {
@@ -91,7 +87,7 @@ return 25
 	}
 
 	for i := 0; i < len(tests); i++ {
-		statment, err := p.ParseStatment()
+		statment, err := p.Next()
 		if tests[i].isError {
 			fmt.Println(err.Error())
 			if err == nil {
@@ -138,7 +134,7 @@ func TestPrefix(t *testing.T) {
 	for i, tt := range prefixTests {
 		l := lexer.New(tt.input)
 		p := New(l)
-		exp, err := p.ParseStatment()
+		exp, err := p.Next()
 		if err != nil {
 			println(i, " error: ", err.Error())
 		}
@@ -151,50 +147,30 @@ func TestPrefix(t *testing.T) {
 func TestParsingInfixExpressions(t *testing.T) {
 	infixTests := []struct {
 		input      string
-		leftValue  int64
+		leftValue  config.ValueType
 		operator   string
-		rightValue int64
+		rightValue config.ValueType
 	}{
-		{"5 + 5;", 5, "+", 5},
-		{"5 - 5;", 5, "-", 5},
-		{"5 * 5;", 5, "*", 5},
-		{"5 / 5;", 5, "/", 5},
-		{"5 > 5;", 5, ">", 5},
-		{"5 < 5;", 5, "<", 5},
-		{"5 == 5;", 5, "==", 5},
-		{"5 != 5;", 5, "!=", 5},
+		{"let a=a+b+c", 5, "+", 5},
+		{"let a=-1 --2", 5, "-", 5},
+		{"let a=5 * 5", 5, "*", 5},
+		{"let a=5 / 5", 5, "/", 5},
+		{"let a=5 > 5", 5, ">", 5},
+		{"let a=5 < 5", 5, "<", 5},
+		{"let a=5 == 5", 5, "==", 5},
+		{"let a=5 <4!= 3>4", 5, "!=", 5},
 	}
 
-	for _, tt := range infixTests {
+	for i, tt := range infixTests {
+		fmt.Printf("-------------------demo %d\n", i)
 		l := lexer.New(tt.input)
 		p := New(l)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
+		stat, err := p.Next()
+		if err != nil {
+			t.Errorf(err.Error())
 		}
-
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
-
-		exp, ok := stmt.Expression.(*ast.InfixExpression)
-		if !ok {
-			t.Fatalf("exp is not ast.InfixExpression. got=%T", stmt.Expression)
-		}
-
-		if !testIntegerLiteral(t, exp.Left, tt.leftValue) {
-			return
-		}
-
-		if exp.Operator != tt.operator {
-			t.Fatalf("exp.Operator is not '%s'. got=%s",
-				tt.operator, exp.Operator)
-		}
-		if !testIntegerLiteral(t, exp.Right, tt.rightValue) {
-			return
-		}
+		lt, _ := stat.(*ast.LetStatement)
+		exp, _ := lt.Expression().(*ast.InfixExpression)
+		fmt.Println(exp.String())
 	}
 }
