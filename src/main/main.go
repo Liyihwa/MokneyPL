@@ -1,17 +1,35 @@
 package main
 
-import "strconv"
+import (
+	"MonkeyPL/src/lexer"
+	"MonkeyPL/src/parser"
+	"bufio"
+	"io"
+	"os"
+)
 
-type A struct {
-	name string
-	age  int
-}
+func Start(in io.Reader, out io.Writer) {
+	scanner := bufio.NewScanner(in)
 
-func (a A) String() string {
-	return "Name: " + a.name + ", Age: " + strconv.Itoa(a.age)
+	for {
+		scanned := scanner.Scan()
+		if !scanned {
+			return
+		}
+
+		line := scanner.Text()
+		l := lexer.New(line) // 一次一行
+		p := parser.New(l)
+		stat, err := p.Next()
+		if err != nil {
+			io.WriteString(out, "[ERROR] "+err.Error()+"\n")
+			continue
+		}
+
+		io.WriteString(out, "> "+stat.String()+"\n")
+	}
 }
 
 func main() {
-	obj := A{name: "Alice", age: 25}
-	print(obj)
+	Start(os.Stdin, os.Stdout)
 }
